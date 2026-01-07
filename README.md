@@ -4,9 +4,10 @@ A comprehensive Python-based layoff tracker that scrapes multiple websites to co
 
 ## 🌟 Features
 
-- **Multi-Source Scraping**: Collects data from 4+ live sources
+- **Multi-Source Scraping**: Collects data from 5+ live sources
   - **Layoffs.fyi**: Tech layoffs (4,200+ records via Airtable API)
-  - **LayoffsTracker.com**: Global layoffs (3,700+ records via Airtable API)
+  - **LayoffsTracker.com**: Tech layoffs (3,700+ records via Airtable API)
+  - **LayoffsTracker.com (Non-Tech)**: Non-tech layoffs across various industries (via Airtable API)
   - **Peerlist.io**: Startup layoffs (HTML parsing)
   - **OfficePulse.live**: India-focused layoffs (API-based)
 
@@ -268,6 +269,7 @@ DATABASE_URL=sqlite:///data/layoffs.db
 # Scraping
 LAYOFFS_FYI_ENABLED=true
 LAYOFFSTRACKER_ENABLED=true
+LAYOFFSTRACKER_NONTECH_ENABLED=true
 PEERLIST_ENABLED=true
 OFFICEPULSE_ENABLED=true
 
@@ -335,9 +337,10 @@ docker-compose down
 | layoffs.fyi | 2,891 | Airtable API |
 | layoffs.fyi (Federal) | 94 | Airtable API |
 | layoffstracker.com | 2,796 | Airtable API |
+| layoffstracker.com (Non-Tech) | TBD | Airtable API |
 | peerlist.io | 283 | Playwright |
 | officepulse.live | 241 | Ninja Tables API |
-| **Total** | **6,600+** | |
+| **Total** | **6,400+** | |
 
 ## 🔧 Adding a New Scraper
 
@@ -369,7 +372,8 @@ MIT License
 ## 🙏 Data Sources
 
 - [Layoffs.fyi](https://layoffs.fyi/) - Tech Layoff Tracker
-- [LayoffsTracker.com](https://layoffstracker.com/) - Global Layoffs
+- [LayoffsTracker.com](https://layoffstracker.com/) - Tech Layoffs
+- [LayoffsTracker.com Non-Tech](https://layoffstracker.com/non-tech-layoffs/) - Non-Tech Layoffs
 - [Peerlist.io](https://peerlist.io/layoffs-tracker/) - Startup Layoffs
 - [OfficePulse.live](https://officepulse.live/) - India Layoffs
 

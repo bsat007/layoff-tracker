@@ -12,7 +12,7 @@ from config.settings import settings
 from src.storage.database import DatabaseManager
 from src.scrapers.layoffs_fyi import LayoffsFyiScraper
 from src.scrapers.comprehensive_scraper import ComprehensiveLayoffScraper
-from src.scrapers.additional_sources import LayoffsTrackerScraper, PeerlistScraper, OfficePulseScraper
+from src.scrapers.additional_sources import LayoffsTrackerScraper, LayoffsTrackerNonTechScraper, PeerlistScraper, OfficePulseScraper
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +59,11 @@ class LayoffScheduler:
         if settings.LAYOFFSTRACKER_ENABLED:
             scrapers['layoffstracker'] = LayoffsTrackerScraper(self.db_manager)
             logger.info("LayoffsTracker.com scraper enabled - using Airtable embed extraction")
+
+        # layoffstracker.com Non-Tech - also uses Airtable embed
+        if settings.LAYOFFSTRACKER_NONTECH_ENABLED:
+            scrapers['layoffstracker_nontech'] = LayoffsTrackerNonTechScraper(self.db_manager)
+            logger.info("LayoffsTracker.com Non-Tech scraper enabled - using Airtable embed extraction")
 
         # peerlist.io - uses HTML tables
         if settings.PEERLIST_ENABLED:
@@ -136,6 +141,17 @@ class LayoffScheduler:
                 replace_existing=True
             )
             logger.info("Scheduled layoffstracker.com scraper every 6 hours")
+
+        if settings.LAYOFFSTRACKER_NONTECH_ENABLED:
+            self.scheduler.add_job(
+                self.run_scraper,
+                trigger=IntervalTrigger(hours=6),
+                args=['layoffstracker_nontech'],
+                id='layoffstracker_nontech_scheduled',
+                name='LayoffsTracker Non-Tech Scraper',
+                replace_existing=True
+            )
+            logger.info("Scheduled layoffstracker.com Non-Tech scraper every 6 hours")
 
         if settings.PEERLIST_ENABLED:
             self.scheduler.add_job(

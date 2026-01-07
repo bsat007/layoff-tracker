@@ -206,6 +206,209 @@ class LayoffsTrackerScraper(BaseScraper):
         return None
 
 
+class LayoffsTrackerNonTechScraper(BaseScraper):
+    """
+    Scraper for layoffstracker.com Non-Tech Layoffs
+    
+    Source: https://layoffstracker.com/non-tech-layoffs/
+    Uses airtable_scraper package to get ALL data from the Airtable shared view
+    Tracks non-tech layoffs from various industries
+    """
+    
+    BASE_URL = "https://layoffstracker.com/non-tech-layoffs/"
+    AIRTABLE_URL = "https://airtable.com/shr7MSwwevBnoS5fV"
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.source_name = "layoffstracker.com (Non-Tech)"
+    
+    @property
+    def base_url(self) -> str:
+        return self.BASE_URL
+    
+    def fetch_layoffs(self) -> List[LayoffCreate]:
+        """Fetch non-tech layoffs from layoffstracker.com via Airtable API"""
+        layoffs = []
+        
+        try:
+            logger.info(f"Fetching non-tech layoffs from {self.source_name} via Airtable...")
+            
+            # Use airtable_scraper to get ALL data
+            table = AirtableScraper(url=self.AIRTABLE_URL)
+            
+            if table.status != 'success':
+                logger.warning(f"Airtable scraper status: {table.status}")
+            
+            # Get raw data
+            raw_rows = table.raw_rows_json
+            raw_columns = table.raw_columns_json
+            
+            if not raw_rows:
+                logger.warning(f"No rows returned from {self.AIRTABLE_URL}")
+                return []
+            
+            logger.info(f"Retrieved {len(raw_rows)} raw rows from Airtable (Non-Tech)")
+            
+            # Build column ID to name mapping
+            column_map = {}
+            for col in raw_columns:
+                col_id = col.get('id')
+                col_name = col.get('name', '').lower().replace(' ', '_').replace('#', '').strip('_')
+                column_map[col_id] = col_name
+            
+            logger.debug(f"Non-Tech column mapping: {column_map}")
+            
+            # Process each row
+            seen = set()
+            for row in raw_rows:
+                try:
+                    cell_values = row.get('cellValuesByColumnId', {})
+                    
+                    # Extract fields based on column mapping
+                    company = None
+                    employees_affected = None
+                    layoff_date = None
+                    industry = None
+                    source_url = None
+                    country = None
+                    location = None
+                    percentage = None
+                    
+                    for col_id, value in cell_values.items():
+                        col_name = column_map.get(col_id, '')
+                        
+                        # Company name
+                        if 'company' in col_name or 'name' == col_name:
+                            company = value if isinstance(value, str) else str(value) if value else None
+                        
+                        # Employees laid off
+                        elif any(x in col_name for x in ['laid_off', 'employees', 'affected', 'laid']):
+                            if isinstance(value, (int, float)):
+                                employees_affected = int(value)
+                        
+                        # Date
+                        elif 'date' in col_name and 'added' not in col_name:
+                            layoff_date = self._parse_airtable_date(value)
+                        
+                        # Industry / Category
+                        elif any(x in col_name for x in ['industry', 'category', 'sector']):
+                            industry = self._resolve_select_value(value, col_id, raw_columns)
+                        
+                        # Source URL
+                        elif col_name == 'source' or 'link' in col_name or 'url' in col_name:
+                            if isinstance(value, str):
+                                source_url = value if value.startswith('http') else None
+                        
+                        # Country
+                        elif 'country' in col_name:
+                            country = self._resolve_select_value(value, col_id, raw_columns)
+                        
+                        # Location / HQ
+                        elif any(x in col_name for x in ['location', 'hq', 'headquarter']):
+                            location = self._resolve_select_value(value, col_id, raw_columns)
+                        
+                        # Percentage
+                        elif '%' in column_map.get(col_id, '') or 'percent' in col_name:
+                            if isinstance(value, (int, float)):
+                                percentage = value
+                    
+                    if not company or company in seen:
+                        continue
+                    
+                    seen.add(company)
+                    
+                    # Default country
+                    if not country:
+                        country = "US"
+                    
+                    # Build description
+                    desc_parts = []
+                    if location:
+                        desc_parts.append(f"Location: {location}")
+                    if percentage:
+                        desc_parts.append(f"Percentage: {percentage}%")
+                    
+                    layoff = LayoffCreate(
+                        company_name=company[:200] if company else "Unknown",
+                        industry=industry,
+                        layoff_date=layoff_date or date.today(),
+                        employees_affected=employees_affected,
+                        employees_remaining=None,
+                        source=self.source_name,
+                        source_url=source_url or self.base_url,
+                        country=country,
+                        description="; ".join(desc_parts) if desc_parts else None
+                    )
+                    layoffs.append(layoff)
+                    
+                except Exception as row_error:
+                    logger.debug(f"Error processing non-tech row: {row_error}")
+                    continue
+            
+            logger.info(f"Found {len(layoffs)} non-tech layoffs from {self.source_name}")
+            
+        except Exception as e:
+            logger.error(f"Error scraping {self.source_name}: {e}")
+            raise ScrapeError(f"Failed to scrape {self.source_name}: {e}")
+        
+        return layoffs
+    
+    def _resolve_select_value(self, value: Any, col_id: str, columns: List[dict]) -> Optional[str]:
+        """Resolve a select/multiSelect value to its display name"""
+        if not value:
+            return None
+        
+        if isinstance(value, str) and not value.startswith('sel'):
+            return value
+        
+        # Find the column definition
+        col_def = None
+        for col in columns:
+            if col.get('id') == col_id:
+                col_def = col
+                break
+        
+        if not col_def:
+            return str(value) if value else None
+        
+        # Get type options (choice definitions)
+        type_options = col_def.get('typeOptions', {})
+        choices = type_options.get('choices', type_options.get('choiceOrder', {}))
+        
+        if isinstance(choices, dict):
+            if isinstance(value, str) and value in choices:
+                choice = choices[value]
+                return choice.get('name', str(value))
+            elif isinstance(value, list):
+                names = []
+                for v in value:
+                    if v in choices:
+                        names.append(choices[v].get('name', str(v)))
+                return ', '.join(names) if names else None
+        
+        return str(value) if value else None
+    
+    def _parse_airtable_date(self, value: Any) -> Optional[date]:
+        """Parse Airtable date value (ISO format)"""
+        if not value:
+            return None
+        
+        try:
+            if isinstance(value, str):
+                if 'T' in value:
+                    dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+                    return dt.date()
+                elif '/' in value:
+                    parts = value.split('/')
+                    if len(parts) == 3:
+                        day, month, year = int(parts[0]), int(parts[1]), int(parts[2])
+                        return date(year, month, day)
+        except (ValueError, IndexError) as e:
+            logger.debug(f"Error parsing date {value}: {e}")
+        
+        return None
+
+
 class PeerlistScraper(BaseScraper):
     """
     Scraper for peerlist.io/layoffs-tracker

@@ -15,30 +15,28 @@ from src.storage.export import DataExporter
 
 
 def main():
-    """Export data"""
+    """Export all data"""
     logger = setup_logging()
 
-    # Default: last 30 days
-    end_date = date.today()
-    start_date = end_date - timedelta(days=30)
-
-    logger.info(f"Exporting data from {start_date} to {end_date}")
+    logger.info("Exporting ALL layoff data...")
 
     db_manager = DatabaseManager()
-    layoffs = db_manager.get_layoffs_by_date_range(start_date, end_date)
+    
+    # Get ALL records from the database
+    layoffs = db_manager.get_all_layoffs()
 
-    logger.info(f"Found {len(layoffs)} records")
+    logger.info(f"Found {len(layoffs)} total records")
 
     exporter = DataExporter()
 
     # Export to all formats
-    csv_path = exporter.to_csv(layoffs)
+    csv_path = exporter.to_csv(layoffs, filename='layoffs_all.csv')
     logger.info(f"✓ CSV: {csv_path}")
 
-    json_path = exporter.to_json(layoffs)
+    json_path = exporter.to_json(layoffs, filename='layoffs_all.json')
     logger.info(f"✓ JSON: {json_path}")
 
-    excel_path = exporter.to_excel(layoffs)
+    excel_path = exporter.to_excel(layoffs, filename='layoffs_all.xlsx')
     logger.info(f"✓ Excel: {excel_path}")
 
     logger.info("Export complete!")

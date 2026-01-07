@@ -37,6 +37,7 @@ class Settings:
     SCRAPING_ENABLED: bool = os.getenv("SCRAPING_ENABLED", "true").lower() == "true"
     LAYOFFS_FYI_ENABLED: bool = os.getenv("LAYOFFS_FYI_ENABLED", "true").lower() == "true"
     LAYOFFSTRACKER_ENABLED: bool = os.getenv("LAYOFFSTRACKER_ENABLED", "true").lower() == "true"
+    LAYOFFSTRACKER_NONTECH_ENABLED: bool = os.getenv("LAYOFFSTRACKER_NONTECH_ENABLED", "true").lower() == "true"
     PEERLIST_ENABLED: bool = os.getenv("PEERLIST_ENABLED", "true").lower() == "true"
     OFFICEPULSE_ENABLED: bool = os.getenv("OFFICEPULSE_ENABLED", "true").lower() == "true"
 
@@ -65,6 +66,7 @@ class Settings:
     # Source URLs
     LAYOFFS_FYI_URL: str = "https://layoffs.fyi/"
     LAYOFFSTRACKER_URL: str = "https://layoffstracker.com/"
+    LAYOFFSTRACKER_NONTECH_URL: str = "https://layoffstracker.com/non-tech-layoffs/"
     PEERLIST_URL: str = "https://peerlist.io/layoffs-tracker/"
     OFFICEPULSE_URL: str = "https://officepulse.live/"
 
