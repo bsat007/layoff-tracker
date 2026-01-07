@@ -7,7 +7,11 @@ from collections import defaultdict
 # from functools import cache, lru_cache
 from io import StringIO
 from pathlib import Path
-from typing import Any, Literal, Self
+from typing import Any, Literal
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 import pandas as pd
 import requests
