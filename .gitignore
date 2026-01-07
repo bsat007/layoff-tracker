@@ -1,0 +1,134 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+pytest_debug.log
+
+# Translations
+*.mo
+*.pot
+
+# Environments
+.env
+.env.*
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.conda/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+.spyderproject
+.spyproject
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Data files (can contain sensitive/large data)
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/exports/*.csv
+data/exports/*.json
+data/exports/*.xlsx
+
+# Log files
+logs/
+*.log
+
+# Playwright
+playwright/.cache/
+playwright-report/
+test-results/
+
+# Local configuration overrides
+*.local
+config.local.py
+
+# Secrets and credentials
+*.pem
+*.key
+*.crt
+secrets/
+credentials/
+
+# Temp files
+*.tmp
+*.temp
+.tmp/
+tmp/
+temp/
+
+# Docker
+.docker/
+
+# Misc
+*.bak
+*.backup

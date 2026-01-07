@@ -1,0 +1,43 @@
+services:
+  # Main application with scheduler
+  layoff-tracker:
+    build: .
+    container_name: layoff-tracker
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    environment:
+      - DATABASE_URL=sqlite:///data/layoffs.db
+      - SCHEDULER_ENABLED=true
+      - SCRAPING_ENABLED=true
+      - LOG_LEVEL=INFO
+      - LOG_FILE=/app/logs/layoff_tracker.log
+    networks:
+      - layoff-network
+
+  # Streamlit dashboard
+  dashboard:
+    build: .
+    container_name: layoff-dashboard
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data:ro
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    environment:
+      - DATABASE_URL=sqlite:///data/layoffs.db
+      - DASHBOARD_PORT=8501
+      - DASHBOARD_HOST=0.0.0.0
+    command: ["streamlit", "run", "src/dashboard/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+    depends_on:
+      - layoff-tracker
+    networks:
+      - layoff-network
+
+networks:
+  layoff-network:
+    driver: bridge
