@@ -290,7 +290,7 @@ PROXY_PASSWORD=password
 ## 📁 Project Structure
 
 ```
-layoff-tracker-v2/
+layoff-tracker/
 ├── src/
 │   ├── api/               # Flask REST API
 │   │   └── app.py
