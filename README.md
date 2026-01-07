@@ -10,7 +10,7 @@ A comprehensive Python-based layoff tracker that scrapes multiple websites to co
   - **Peerlist.io**: Startup layoffs (HTML parsing)
   - **OfficePulse.live**: India-focused layoffs (API-based)
 
-- **Data Export**: Export to CSV, JSON, or Excel
+- **Data Export**: Export to CSV, JSON, or Excel with flexible options
 
 - **REST API**: Flask-based API for programmatic access
 
@@ -71,11 +71,104 @@ python -m src.main schedule          # Run continuous scheduler
 python -m src.main dashboard         # Launch Streamlit dashboard
 python -m src.main dashboard --port 8502  # Custom port
 
-# Data export
+# Data export (last N days)
+python -m src.main export --format csv --days 30
+python -m src.main export --format json --days 7
+python -m src.main export --format excel --days 365
+
+# Export all data
+python scripts/export_data.py
+```
+
+## 📤 Data Export Options
+
+### CLI Export
+
+```bash
+# Export last 30 days (default) in different formats
 python -m src.main export --format csv --days 30
 python -m src.main export --format json --days 7
 python -m src.main export --format excel --days 365
 ```
+
+### Export All Data
+
+```python
+from src.storage.database import DatabaseManager
+from src.storage.export import DataExporter
+
+db = DatabaseManager()
+exporter = DataExporter()
+
+# Get all records
+layoffs = db.get_all_layoffs()
+
+# Export to all formats
+exporter.to_csv(layoffs, filename='layoffs_all.csv')
+exporter.to_json(layoffs, filename='layoffs_all.json')
+exporter.to_excel(layoffs, filename='layoffs_all.xlsx')
+```
+
+### Export with Date Range
+
+```python
+from datetime import date, timedelta
+from src.storage.database import DatabaseManager
+from src.storage.export import DataExporter
+
+db = DatabaseManager()
+exporter = DataExporter()
+
+# Get records from date range
+start = date(2025, 1, 1)
+end = date(2025, 12, 31)
+layoffs = db.get_layoffs_by_date_range(start, end)
+
+exporter.to_csv(layoffs, filename='layoffs_2025.csv')
+```
+
+### Export by Company
+
+```python
+from src.storage.database import DatabaseManager
+from src.storage.export import DataExporter
+
+db = DatabaseManager()
+exporter = DataExporter()
+
+# Search for specific company
+layoffs = db.get_layoffs_by_company("Google")
+exporter.to_csv(layoffs, filename='google_layoffs.csv')
+```
+
+### Export Formats
+
+| Format | File | Features |
+|--------|------|----------|
+| **CSV** | `.csv` | Simple, works with Excel/Google Sheets |
+| **JSON** | `.json` | Structured data for APIs/apps |
+| **Excel** | `.xlsx` | Multiple sheets with summary, top companies, and industry breakdown |
+
+### Excel Export Details
+
+The Excel export includes 4 sheets:
+1. **All Layoffs** - Complete dataset
+2. **Summary** - Total companies, records, employees affected, date range
+3. **Top Companies** - Top 20 companies by layoffs
+4. **By Industry** - Breakdown by industry
+
+### API Export
+
+```bash
+# Export via REST API
+curl http://localhost:5000/api/export/csv > layoffs.csv
+curl http://localhost:5000/api/export/json > layoffs.json
+curl http://localhost:5000/api/export/excel > layoffs.xlsx
+```
+
+### Export Location
+
+All exports are saved to: `data/exports/`
 
 ## 🔌 REST API
 
