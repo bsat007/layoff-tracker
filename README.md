@@ -2,6 +2,58 @@
 
 A comprehensive Python-based layoff tracker that scrapes multiple websites to collect data about companies that have recently laid off employees. Features automated scraping, REST API, data export, and an interactive Streamlit dashboard.
 
+## 💡 Use Cases
+
+This dataset and API can be used for:
+
+### 📈 **Business Intelligence & Analytics**
+- Track industry-wide layoff trends and patterns
+- Analyze which sectors are most affected during economic downturns
+- Compare layoff rates across different countries and regions
+- Identify seasonal patterns in workforce reductions
+
+### 🎯 **Recruitment & HR**
+- Identify companies with recent layoffs for targeted recruitment campaigns
+- Source talent from specific companies or industries
+- Build candidate pipelines from affected companies
+- Track competitor workforce changes
+
+### 📰 **Journalism & Research**
+- Data journalism on employment trends
+- Economic research and labor market analysis
+- Create visualizations and infographics about layoffs
+- Track the impact of economic events on employment
+
+### 💼 **Job Seekers**
+- Monitor layoffs at target companies
+- Identify industries with higher job security
+- Find companies that are hiring (inverse indicator)
+- Network with affected professionals
+
+### 🤖 **AI/ML Applications**
+- Train models to predict layoff trends
+- Sentiment analysis on employment market
+- Build recommendation systems for job seekers
+- Create alert systems for specific companies or industries
+
+### 📊 **Financial Analysis**
+- Correlate layoffs with stock performance
+- Analyze company health indicators
+- Track startup ecosystem trends
+- Monitor venture-backed company stability
+
+### 🔔 **Notification Services**
+- Build alert systems for specific companies
+- Create RSS feeds for layoff news
+- Develop Slack/Discord bots for team notifications
+- Email digests of recent layoffs
+
+### 🌐 **Job Boards & Career Platforms**
+- Integrate layoff data into job search platforms
+- Show company stability indicators
+- Provide context for job listings
+- Help candidates make informed decisions
+
 ## 🌟 Features
 
 - **Multi-Source Scraping**: Collects data from 5+ live sources
