@@ -96,7 +96,6 @@ data/*.db
 data/*.sqlite
 data/*.sqlite3
 data/exports/*.csv
-data/exports/*.json
 data/exports/*.xlsx
 
 # Log files
