@@ -11,6 +11,12 @@ A comprehensive Python-based layoff tracker that scrapes multiple websites to co
   - **Peerlist.io**: Startup layoffs (HTML parsing)
   - **OfficePulse.live**: India-focused layoffs (API-based)
 
+- **Meilisearch Integration**: Fast full-text search with:
+  - Fuzzy matching (typo-tolerant: `"amazn"` → `"Amazon"`)
+  - Filtering by industry, country, date range, employee count
+  - Sorting by date or employees affected
+  - Sub-millisecond search performance
+
 - **Data Export**: Export to CSV, JSON, or Excel with flexible options
 
 - **REST API**: Flask-based API for programmatic access
@@ -236,6 +242,225 @@ GET /api/layoffs?source=layoffs.fyi&country=US&limit=50
 }
 ```
 
+## 🔍 Meilisearch Integration
+
+Full-text search with fuzzy matching powered by Meilisearch.
+
+### Setup
+
+1. Add Meilisearch credentials to `.env`:
+```bash
+MEILISEARCH_URL=http://your-meilisearch-server:7700
+MEILISEARCH_API_KEY=your-api-key
+```
+
+2. Upload data to Meilisearch:
+```bash
+python scripts/upload_to_meilisearch.py
+```
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| **Fuzzy Search** | Typo-tolerant search (`"amazn"` finds `"Amazon"`) |
+| **Filtering** | Filter by industry, country, source, date range, employee count |
+| **Sorting** | Sort by layoff_date or employees_affected |
+| **Fast** | Sub-millisecond search across 6,000+ records |
+
+### Search Script
+
+```bash
+# Simple search (with fuzzy matching)
+python scripts/search_meilisearch.py --query "google"
+
+# Fuzzy search - typo tolerant
+python scripts/search_meilisearch.py --query "micorsoft"   # Finds Microsoft
+
+# Filter by country
+python scripts/search_meilisearch.py --country "US" --limit 10
+
+# Large layoffs sorted
+python scripts/search_meilisearch.py --min-affected 1000 --sort "employees_affected:desc"
+
+# Date range filter
+python scripts/search_meilisearch.py --date-from "2025-01-01" --date-to "2025-12-31"
+
+# Combined search + filter
+python scripts/search_meilisearch.py --query "meta" --country "US" --min-affected 100
+
+# Run interactive demo
+python scripts/search_meilisearch.py --demo
+```
+
+### Python API
+
+```python
+from meilisearch import Client
+
+client = Client("http://your-server:7700", "your-api-key")
+index = client.index("layoffs")
+
+# Simple search (fuzzy matching enabled)
+results = index.search("gogle")  # Finds "Google"
+
+# Search with filters
+results = index.search("", {
+    "filter": "country = 'US' AND industry = 'Technology'",
+    "sort": ["employees_affected:desc"],
+    "limit": 50
+})
+
+# Date range filter
+results = index.search("", {
+    "filter": "layoff_date >= '2025-01-01' AND employees_affected > 100"
+})
+```
+
+### cURL Examples
+
+```bash
+# Set variables for convenience
+export MEILI_URL="http://localhost:7700"
+export MEILI_KEY="your-api-key"
+
+# Simple search (company name)
+curl "$MEILI_URL/indexes/layoffs/search" \
+  -H "Authorization: Bearer $MEILI_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"q": "amazon"}'
+
+# Fuzzy search (typo-tolerant) - "gogle" finds "Google"
+curl "$MEILI_URL/indexes/layoffs/search" \
+  -H "Authorization: Bearer $MEILI_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"q": "gogle"}'
+
+# Filter by country
+curl "$MEILI_URL/indexes/layoffs/search" \
+  -H "Authorization: Bearer $MEILI_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"q": "", "filter": "country = US"}'
+
+# Filter by industry
+curl "$MEILI_URL/indexes/layoffs/search" \
+  -H "Authorization: Bearer $MEILI_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"q": "", "filter": "industry = Technology"}'
+
+# Filter by minimum employees affected
+curl "$MEILI_URL/indexes/layoffs/search" \
+  -H "Authorization: Bearer $MEILI_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"q": "", "filter": "employees_affected > 500"}'
+
+# Filter by date range
+curl "$MEILI_URL/indexes/layoffs/search" \
+  -H "Authorization: Bearer $MEILI_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"q": "", "filter": "layoff_date >= 2025-01-01 AND layoff_date <= 2025-12-31"}'
+
+# Combined: search + filter + sort (largest layoffs first)
+curl "$MEILI_URL/indexes/layoffs/search" \
+  -H "Authorization: Bearer $MEILI_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "q": "tech",
+    "filter": "country = US AND employees_affected > 100",
+    "sort": ["employees_affected:desc"],
+    "limit": 20
+  }'
+
+# Pagination (page 2 with 10 results per page)
+curl "$MEILI_URL/indexes/layoffs/search" \
+  -H "Authorization: Bearer $MEILI_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"q": "", "limit": 10, "offset": 10}'
+
+# Get index stats
+curl "$MEILI_URL/indexes/layoffs/stats" \
+  -H "Authorization: Bearer $MEILI_KEY"
+
+# Get all indexes
+curl "$MEILI_URL/indexes" \
+  -H "Authorization: Bearer $MEILI_KEY"
+
+# ============================================
+# SEARCH FOR MULTIPLE COMPANIES
+# ============================================
+
+# Multi-search API - search multiple companies in one request
+curl "$MEILI_URL/multi-search" \
+  -H "Authorization: Bearer $MEILI_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "queries": [
+      {"indexUid": "layoffs", "q": "Google", "limit": 5},
+      {"indexUid": "layoffs", "q": "Amazon", "limit": 5},
+      {"indexUid": "layoffs", "q": "Meta", "limit": 5},
+      {"indexUid": "layoffs", "q": "Microsoft", "limit": 5}
+    ]
+  }'
+
+# Multi-search with filters for each company
+curl "$MEILI_URL/multi-search" \
+  -H "Authorization: Bearer $MEILI_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "queries": [
+      {"indexUid": "layoffs", "q": "Google", "filter": "country = US", "limit": 5},
+      {"indexUid": "layoffs", "q": "Amazon", "filter": "country = US", "limit": 5},
+      {"indexUid": "layoffs", "q": "Tesla", "filter": "employees_affected > 100", "limit": 5}
+    ]
+  }'
+
+# Search with space-separated company names (matches any)
+curl "$MEILI_URL/indexes/layoffs/search" \
+  -H "Authorization: Bearer $MEILI_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"q": "Google Amazon Meta", "limit": 20}'
+```
+
+#### Filter Syntax Reference
+
+```bash
+# Equality
+"filter": "country = US"
+
+# Not equal
+"filter": "country != US"
+
+# Comparison operators
+"filter": "employees_affected > 100"
+"filter": "employees_affected >= 100"
+"filter": "employees_affected < 1000"
+"filter": "employees_affected <= 1000"
+
+# AND / OR
+"filter": "country = US AND industry = Technology"
+"filter": "country = US OR country = India"
+
+# IN operator (multiple values)
+"filter": "country IN [US, UK, India]"
+
+# Date range
+"filter": "layoff_date >= 2025-01-01 AND layoff_date <= 2025-12-31"
+
+# Combined complex filter
+"filter": "(country = US OR country = India) AND employees_affected > 100 AND industry = Technology"
+```
+
+### Indexed Fields
+
+| Field | Searchable | Filterable | Sortable |
+|-------|------------|------------|----------|
+| `company_name` | ✅ (fuzzy) | ❌ | ❌ |
+| `industry` | ❌ | ✅ | ❌ |
+| `layoff_date` | ❌ | ✅ | ✅ |
+| `employees_affected` | ❌ | ✅ | ✅ |
+| `source` | ❌ | ✅ | ❌ |
+| `country` | ❌ | ✅ | ❌ |
+
 ## 🗄️ Database
 
 SQLite database at `data/layoffs.db`
@@ -265,6 +490,10 @@ Edit `.env` file:
 ```bash
 # Database
 DATABASE_URL=sqlite:///data/layoffs.db
+
+# Meilisearch (for full-text search)
+MEILISEARCH_URL=http://localhost:7700
+MEILISEARCH_API_KEY=your-api-key
 
 # Scraping
 LAYOFFS_FYI_ENABLED=true
@@ -307,11 +536,19 @@ layoff-tracker/
 │   ├── utils/             # Utilities
 │   ├── scheduler.py       # Job scheduler
 │   └── main.py            # Entry point
+├── scripts/
+│   ├── upload_to_meilisearch.py  # Upload data to Meilisearch
+│   ├── search_meilisearch.py     # Search CLI for Meilisearch
+│   ├── export_data.py            # Export all data
+│   └── run_all_scrapers.py       # Run all scrapers
 ├── config/                # Configuration
-├── data/                  # Database files
+├── data/                  # Database and exports
+│   ├── layoffs.db         # SQLite database
+│   └── exports/           # CSV, JSON, Excel exports
 ├── logs/                  # Log files
 ├── lib/                   # Local packages
 │   └── airtable-scraper/  # Fixed for Python 3.11
+├── .env                   # Environment variables
 ├── Dockerfile
 ├── docker-compose.yml
 └── requirements.txt
